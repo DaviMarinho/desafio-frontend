@@ -1,0 +1,4 @@
+/* Additional custom styles for Header component */
+.header-logo {
+  cursor: pointer;
+}
