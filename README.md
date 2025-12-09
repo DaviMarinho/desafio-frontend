@@ -573,26 +573,6 @@ O projeto segue a estratégia GitFlow:
 4. Após aprovação, merge em `develop`
 5. Quando estável, merge de `develop` para `main`
 
-## Melhorias Futuras
-
-- [ ] Integrar com backend real (substituir json-server)
-- [ ] Adicionar testes E2E com Cypress ou Playwright
-- [ ] Implementar refresh token automático
-- [ ] Adicionar internacionalização (i18n)
-- [ ] Implementar service workers para PWA
-- [ ] Adicionar analytics e monitoramento (Sentry)
-- [ ] Implementar dark mode
-- [ ] Adicionar documentação Storybook para componentes
-- [ ] Implementar CI/CD pipeline (GitHub Actions)
-- [ ] Adicionar upload de imagens para notícias
-- [ ] Implementar cache com React Query
-
-## Licença
-
-UNLICENSED
-
-Este projeto foi desenvolvido como prova técnica para fins educacionais e de avaliação.
-
 ---
 
 **Desenvolvido com React, TypeScript e Docker**
