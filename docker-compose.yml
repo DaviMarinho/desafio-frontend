@@ -29,7 +29,6 @@ services:
     container_name: prova-frontend-dev
     ports:
       - "3000:3000"
-      - "3001:3001"
     volumes:
       - ./src:/app/src
       - ./public:/app/public
@@ -53,10 +52,10 @@ services:
     container_name: prova-json-server
     working_dir: /app
     ports:
-      - "3001:3001"
+      - "3003:3003"
     volumes:
       - ./db.json:/app/db.json
-    command: npx json-server --watch db.json --port 3001 --host 0.0.0.0
+    command: npx json-server --watch db.json --port 3003 --host 0.0.0.0
     networks:
       - app-network
     restart: unless-stopped
