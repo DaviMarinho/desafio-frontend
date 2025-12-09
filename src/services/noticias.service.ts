@@ -13,16 +13,40 @@ interface ListarNoticiasParams {
 export const listarNoticias = async (params: ListarNoticiasParams = {}) => {
   const { page = 1, perPage = 10, q } = params;
 
+  // Se houver busca, buscar todas as notícias e filtrar no client-side
+  // (json-server 1.0 beta não suporta bem o parâmetro q)
+  if (q && q.trim()) {
+    const response = await api.get<Noticia[]>('/noticias?_sort=createdAt&_order=desc');
+    const allNoticias = response.data;
+
+    // Filtrar por título ou descrição (case insensitive)
+    const searchLower = q.toLowerCase();
+    const filtered = allNoticias.filter(
+      (noticia) =>
+        noticia.titulo.toLowerCase().includes(searchLower) ||
+        noticia.descricao.toLowerCase().includes(searchLower)
+    );
+
+    // Aplicar paginação manual
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    const paginatedData = filtered.slice(start, end);
+
+    return {
+      data: paginatedData,
+      total: filtered.length,
+      page,
+      perPage,
+    };
+  }
+
+  // Sem busca, usar paginação do servidor
   const queryParams = new URLSearchParams({
     _page: page.toString(),
     _limit: perPage.toString(),
     _sort: 'createdAt',
     _order: 'desc',
   });
-
-  if (q) {
-    queryParams.append('q', q);
-  }
 
   const response = await api.get<Noticia[]>(`/noticias?${queryParams.toString()}`);
 

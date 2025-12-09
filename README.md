@@ -49,10 +49,12 @@ cp .env.example .env
 Variáveis disponíveis:
 
 ```env
-# API Configuration
-REACT_APP_API_URL=http://localhost:3001
-REACT_APP_BACKEND_URL=http://localhost:3001
+# JSON Server (Mock API para CRUD de Notícias)
+REACT_APP_API_URL=http://localhost:3003
+# ViaCEP API (Externa)
 REACT_APP_VIACEP_URL=https://viacep.com.br/ws
+# Porta do servidor de desenvolvimento React
+PORT=3000
 ```
 
 ## Executando a Aplicação
@@ -62,17 +64,17 @@ REACT_APP_VIACEP_URL=https://viacep.com.br/ws
 #### Executar frontend + json-server (Recomendado)
 
 ```bash
-# Inicia frontend (porta 3000) + json-server (porta 3001)
+# Inicia frontend (porta 3000) + json-server (porta 3003)
 npm run dev:all
 ```
 
 #### Executar separadamente
 
 ```bash
-# Terminal 1 - Frontend
+# Terminal 1 - Frontend React
 npm run dev
 
-# Terminal 2 - Backend Mock
+# Terminal 2 - Mock API (json-server)
 npm run json-server
 ```
 
@@ -89,16 +91,28 @@ A aplicação estará disponível em `http://localhost:3000`
 
 ### Opção 2: Execução com Docker
 
-#### Desenvolvimento (com hot reload)
+#### Desenvolvimento (padrão - com hot reload)
 
 ```bash
-docker-compose --profile development up
+# Inicia frontend + json-server em modo desenvolvimento
+docker compose up
+
+# Ou com rebuild forçado
+docker compose up --build
 ```
 
 #### Produção (Nginx otimizado)
 
 ```bash
-docker-compose --profile production up --build
+# Build de produção com Nginx
+docker compose --profile production up --build
+```
+
+#### JSON Server Standalone
+
+```bash
+# Apenas o json-server (útil se o frontend roda fora do Docker)
+docker compose --profile standalone up
 ```
 
 #### Build Manual
@@ -110,10 +124,18 @@ docker run -d -p 3000:80 prova-frontend:prod
 
 # Desenvolvimento
 docker build --target development -t prova-frontend:dev .
-docker run -d -p 3000:3000 -v $(pwd)/src:/app/src prova-frontend:dev
+docker run -d -p 3000:3000 -p 3003:3003 -v $(pwd)/src:/app/src prova-frontend:dev
 ```
 
 A aplicação estará disponível em `http://localhost:3000`
+
+**Modos de execução Docker:**
+
+| Comando | O que faz | Uso |
+|---------|-----------|-----|
+| `docker compose up` | Frontend Dev + json-server | Desenvolvimento local com Docker |
+| `docker compose --profile production up` | Frontend Prod (Nginx) | Simular ambiente de produção |
+| `docker compose --profile standalone up` | Apenas json-server | Frontend roda localmente (npm), API no Docker |
 
 ## Estrutura do Projeto
 
@@ -165,7 +187,7 @@ Service (noticias.service.ts) para lógica de API
     ↓ usa
 API Instance (services/api.ts) com interceptors
     ↓ faz request para
-Backend (json-server)
+Mock API (json-server)
 ```
 
 ## Funcionalidades
@@ -209,13 +231,15 @@ Backend (json-server)
 
 - Listagem com paginação
 - Criação, edição e exclusão de notícias
-- Busca por título/descrição
+- **Busca por título/descrição** (client-side filtering com debounce de 500ms)
 - Interface Material-UI
 - **Lazy loading** com React.lazy() (reduz bundle inicial ~30%)
 
+**Nota sobre busca:** A busca é implementada client-side devido a limitações do json-server 1.0 beta. Quando integrado com backend real, a busca pode ser migrada para server-side.
+
 ## API Endpoints
 
-### Base URL: `http://localhost:3001`
+### Base URL: `http://localhost:3003`
 
 ---
 
@@ -225,12 +249,14 @@ Backend (json-server)
 |--------|----------|-----------|
 | GET | `/noticias` | Lista todas as notícias |
 | GET | `/noticias?_page=1&_limit=10` | Paginação |
-| GET | `/noticias?q=termo` | Busca por termo |
+| GET | `/noticias?_sort=createdAt&_order=desc` | Ordenação |
 | GET | `/noticias/:id` | Obtém notícia por ID |
 | POST | `/noticias` | Cria nova notícia |
 | PUT | `/noticias/:id` | Atualiza notícia |
 | PATCH | `/noticias/:id` | Atualiza parcialmente |
 | DELETE | `/noticias/:id` | Remove notícia |
+
+**Busca:** A busca por título/descrição é implementada client-side no frontend (/home/davi/Workspace/testes/desafio-frontend/src/services/noticias.service.ts:18-40)
 
 **Exemplo de Body (POST/PUT):**
 ```json
@@ -294,8 +320,9 @@ curl https://viacep.com.br/ws/01001000/json/
 - Suporte a paginação, busca e ordenação
 
 **Realismo:**
-- Simula backend real para desenvolvimento frontend
-- Permite testar integrações antes do backend estar pronto
+- Simula API REST real para desenvolvimento frontend
+- Permite testar integrações HTTP sem necessidade de backend real
+- Ideal para prototipação e desenvolvimento de features frontend
 
 ### Por que Lazy Loading (Code Splitting)?
 
@@ -351,8 +378,8 @@ const Noticias = lazy(() => import('./pages/Noticias'));
 ```bash
 # Desenvolvimento
 npm run dev:all             # Frontend + json-server
-npm run dev                 # Frontend apenas
-npm run json-server         # Backend mock apenas
+npm run dev                 # Frontend React apenas
+npm run json-server         # Mock API (json-server) apenas
 
 # Build
 npm run build               # Build de produção otimizado
@@ -369,10 +396,12 @@ npm run lint:fix            # Corrige problemas ESLint
 npm run format              # Formata código com Prettier
 
 # Docker
-docker-compose --profile development up          # Dev com hot reload
-docker-compose --profile production up --build   # Prod com Nginx
-docker-compose down                              # Parar containers
-docker-compose logs -f frontend                  # Ver logs
+docker compose up                                # Dev com hot reload (padrão)
+docker compose --profile production up --build   # Prod com Nginx
+docker compose --profile standalone up           # Apenas json-server
+docker compose down                              # Parar containers
+docker compose logs -f frontend-dev              # Ver logs do frontend
+docker compose logs -f json-server               # Ver logs do json-server
 ```
 
 ## Testes
@@ -502,11 +531,11 @@ CHOKIDAR_USEPOLLING=true
 
 ### Problema: Conflito de portas
 
-**Solução:** Mate processos usando as portas 3000 e 3001:
+**Solução:** Mate processos usando as portas 3000 e 3003:
 ```bash
 # Linux/Mac
 lsof -ti:3000 | xargs kill -9
-lsof -ti:3001 | xargs kill -9
+lsof -ti:3003 | xargs kill -9
 
 # Windows
 netstat -ano | findstr :3000
@@ -546,7 +575,7 @@ O projeto segue a estratégia GitFlow:
 
 ## Melhorias Futuras
 
-- [ ] Implementar autenticação real com backend JWT
+- [ ] Integrar com backend real (substituir json-server)
 - [ ] Adicionar testes E2E com Cypress ou Playwright
 - [ ] Implementar refresh token automático
 - [ ] Adicionar internacionalização (i18n)

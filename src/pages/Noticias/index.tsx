@@ -77,6 +77,8 @@ const Noticias: React.FC = () => {
   }, [searchQuery]);
 
   // Load noticias
+  // Nota: A busca é implementada client-side (ver noticias.service.ts)
+  // devido a limitações do json-server 1.0 beta
   const loadNoticias = useCallback(async () => {
     setLoading(true);
     try {

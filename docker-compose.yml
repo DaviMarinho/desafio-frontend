@@ -1,8 +1,33 @@
-version: '3.9'
-
 services:
   # ==========================================
+  # Frontend React (Desenvolvimento) - DEFAULT
+  # Inclui json-server integrado
+  # Use: docker compose up
+  # ==========================================
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: prova-frontend-dev
+    ports:
+      - "3000:3000"
+      - "3003:3003"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./db.json:/app/db.json
+    environment:
+      - REACT_APP_API_URL=http://localhost:3003
+      - REACT_APP_VIACEP_URL=https://viacep.com.br/ws
+      - CHOKIDAR_USEPOLLING=true  # Para hot reload no Docker
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # ==========================================
   # Frontend React (Produção com Nginx)
+  # Use: docker compose --profile production up
   # ==========================================
   frontend-prod:
     build:
@@ -19,33 +44,8 @@ services:
       - production
 
   # ==========================================
-  # Frontend React (Desenvolvimento)
-  # ==========================================
-  frontend-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: development
-    container_name: prova-frontend-dev
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./db.json:/app/db.json
-    environment:
-      - REACT_APP_API_URL=http://localhost:3001
-      - REACT_APP_BACKEND_URL=http://localhost:3001
-      - REACT_APP_VIACEP_URL=https://viacep.com.br/ws
-      - CHOKIDAR_USEPOLLING=true  # Para hot reload no Docker
-    networks:
-      - app-network
-    restart: unless-stopped
-    profiles:
-      - development
-
-  # ==========================================
-  # JSON Server (Backend Mock) - Standalone
+  # JSON Server (Mock API) - Standalone
+  # Use: docker compose --profile standalone up
   # ==========================================
   json-server:
     image: node:18-alpine
