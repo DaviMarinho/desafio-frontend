@@ -59,8 +59,8 @@ RUN npm install
 
 COPY . .
 
-# Expor portas (React: 3000, json-server: 3001)
-EXPOSE 3000 3001
+# Expor portas (React: 3000, json-server: 3000)
+EXPOSE 3000 3000
 
 # Comando para iniciar ambos os serviços
 CMD ["npm", "run", "dev:all"]
