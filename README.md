@@ -51,7 +51,7 @@ Variáveis disponíveis:
 ```env
 # API Configuration
 REACT_APP_API_URL=http://localhost:3001
-REACT_APP_BACKEND_URL=http://localhost:3000
+REACT_APP_BACKEND_URL=http://localhost:3001
 REACT_APP_VIACEP_URL=https://viacep.com.br/ws
 ```
 

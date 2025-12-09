@@ -36,7 +36,7 @@ services:
       - ./db.json:/app/db.json
     environment:
       - REACT_APP_API_URL=http://localhost:3001
-      - REACT_APP_BACKEND_URL=http://localhost:3000
+      - REACT_APP_BACKEND_URL=http://localhost:3001
       - REACT_APP_VIACEP_URL=https://viacep.com.br/ws
       - CHOKIDAR_USEPOLLING=true  # Para hot reload no Docker
     networks:
